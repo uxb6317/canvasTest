@@ -26,9 +26,9 @@ window.addEventListener("load", () => {
     ctx.moveTo(e.clientX, e.clientY);
   }
 
-  canvas.addEventListener("pointerdown", startPosition);
-  canvas.addEventListener("pointerup", finishedPosition);
-  canvas.addEventListener("pointermove", draw);
+  canvas.addEventListener("touchstart", startPosition);
+  canvas.addEventListener("touchend", finishedPosition);
+  canvas.addEventListener("touchmove", draw);
 
   const sketchColors = document.querySelectorAll(".color");
   sketchColors.forEach(color => {
