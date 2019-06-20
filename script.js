@@ -1,5 +1,6 @@
 mdc.ripple.MDCRipple.attachTo(document.querySelector(".sketch-finish"));
 mdc.ripple.MDCRipple.attachTo(document.querySelector(".sketch-clear"));
+mdc.ripple.MDCRipple.attachTo(document.querySelector(".sketch-text"));
 
 window.addEventListener("load", () => {
   const sketchContainer = document.getElementById("sketch");
@@ -75,26 +76,52 @@ window.addEventListener("load", () => {
   sketchCanvas.addEventListener(
     "touchstart",
     e => {
+      e.preventDefault();
       sketchProperties.painting = true;
-      const inputCoords = {
-        x: e.clientX,
-        y: e.clientY
-      };
-      draw(inputCoords, sketchProperties);
+      // getTouchPos();
+      // const inputCoords = {
+      //   x: e.clientX,
+      //   y: e.clientY
+      // };
+      draw(getTouchPos(), sketchProperties);
     },
     false
   );
   sketchCanvas.addEventListener(
     "touchmove",
     e => {
-      const inputCoords = {
-        x: e.clientX,
-        y: e.clientY
-      };
-      draw(inputCoords, sketchProperties);
+      e.preventDefault();
+      // const inputCoords = {
+      //   x: e.clientX,
+      //   y: e.clientY
+      // };
+      draw(getTouchPos(), sketchProperties);
     },
     false
   );
+  sketchCanvas.addEventListener(
+    "touchend",
+    e => {
+      e.preventDefault();
+      sketchProperties.painting = false;
+      sketchCtx.beginPath();
+    },
+    false
+  );
+
+  function getTouchPos(e) {
+    if (!e) var e = event;
+
+    if (e.touches) {
+      if (e.touches.length == 1) {
+        // Only deal with one finger
+        var touch = e.touches[0]; // Get the information for finger #1
+        touchX = touch.pageX - touch.target.offsetLeft;
+        touchY = touch.pageY - touch.target.offsetTop;
+        return { x: touchX, y: touchY };
+      }
+    }
+  }
 
   const sketchColors = document.querySelectorAll(".color");
   sketchColors.forEach(color => {
@@ -143,6 +170,7 @@ window.addEventListener("load", () => {
           event.target.style.transform = `translate(${position.x}px, ${
             position.y
           }px)`;
+          event.preventDefault();
         },
         end(event) {
           sketchContainer.removeChild(newCanvas);
@@ -214,4 +242,35 @@ window.addEventListener("load", () => {
 
     return tempCanvas;
   }
+
+  const textFieldBtn = document.querySelector(".sketch-text");
+  textFieldBtn.addEventListener("click", () => {
+    const textContainer = document.createElement("div");
+    textContainer.classList.add("sketch-addText");
+
+    const textArea = document.createElement("textarea");
+    textArea.classList.add("sketch-textarea");
+
+    const addTextBtn = document.createElement("button");
+    addTextBtn.classList.add("sketch-textSubmit");
+    addTextBtn.classList.add("mdc-button");
+    addTextBtn.classList.add("mdc-button--raised");
+    addTextBtn.textContent = "Add";
+
+    addTextBtn.addEventListener("click", () => {
+      sketchCtx.font = "40px Times New Roman";
+      sketchCtx.fillText(
+        textArea.value,
+        sketchCanvas.width / 2,
+        sketchCanvas.height / 2
+      );
+
+      sketchContainer.removeChild(textContainer);
+    });
+
+    textContainer.appendChild(textArea);
+    textContainer.appendChild(addTextBtn);
+    sketchContainer.appendChild(textContainer);
+    mdc.ripple.MDCRipple.attachTo(document.querySelector(".sketch-textSubmit"));
+  });
 });
