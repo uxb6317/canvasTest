@@ -2,72 +2,125 @@ mdc.ripple.MDCRipple.attachTo(document.querySelector(".sketch-finish"));
 mdc.ripple.MDCRipple.attachTo(document.querySelector(".sketch-clear"));
 
 window.addEventListener("load", () => {
-  const canvas = document.querySelector("#sketch-area");
-  const ctx = canvas.getContext("2d");
+  const sketchContainer = document.getElementById("sketch");
+  const sketchCanvas = document.querySelector("#sketch-area");
+  const sketchCtx = sketchCanvas.getContext("2d");
+  const initialLineWidth = 10;
+  let sketchProperties = {
+    lineWidth: initialLineWidth,
+    lineCap: "round",
+    painting: false
+  };
+  let boardProperties = {
+    canvasNums: 0,
+    perRow: 4
+  };
 
-  let painting = false;
-  function startPosition(e) {
-    painting = true;
-    draw(e);
+  recomputeCanvasDimension(sketchCanvas, sketchContainer);
+
+  // Problems: Sketch gets erased, lineWidth doesn't scale
+  function recomputeCanvasDimension(canvasDom, containerDom) {
+    /// get computed style for container
+    const cs = getComputedStyle(containerDom);
+
+    /// these will return dimensions in pixel
+    const width = parseInt(cs.getPropertyValue("width"), 10);
+    const height = parseInt(cs.getPropertyValue("height"), 10);
+
+    canvasDom.width = width;
+    canvasDom.height = height;
   }
 
-  function finishedPosition() {
-    painting = false;
-    ctx.beginPath();
+  // changes canvas size based on window size
+  window.addEventListener("resize", () =>
+    recomputeCanvasDimension(sketchCanvas, sketchContainer)
+  );
+
+  function draw(coords, properties) {
+    if (!properties.painting) return;
+    sketchCtx.lineWidth = properties.lineWidth;
+    sketchCtx.lineCap = properties.lineCap;
+    sketchCtx.lineTo(coords.x, coords.y);
+    sketchCtx.stroke();
+    sketchCtx.beginPath();
+    sketchCtx.moveTo(coords.x, coords.y);
   }
 
-  function draw(e) {
-    if (!painting) return;
-    ctx.lineWidth = 10;
-    ctx.lineCap = "round";
-    ctx.lineTo(e.clientX, e.clientY);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(e.clientX, e.clientY);
-  }
+  sketchCanvas.addEventListener("mousedown", e => {
+    sketchProperties.painting = true;
+    const inputCoords = {
+      x: e.clientX,
+      y: e.clientY
+    };
+    draw(inputCoords, sketchProperties);
+  });
 
-  canvas.addEventListener("mousedown", startPosition, false);
-  canvas.addEventListener("mouseup", finishedPosition, false);
-  canvas.addEventListener("mousemove", draw, false);
+  sketchCanvas.addEventListener("mouseup", () => {
+    sketchProperties.painting = false;
+    sketchCtx.beginPath();
+  });
+
+  sketchCanvas.addEventListener("mousemove", e => {
+    const inputCoords = {
+      x: e.clientX,
+      y: e.clientY
+    };
+    draw(inputCoords, sketchProperties);
+  });
 
   const sketchColors = document.querySelectorAll(".color");
   sketchColors.forEach(color => {
     const cssValues = getComputedStyle(color);
     color.addEventListener("click", () => {
-      console.log(cssValues.backgroundColor);
-      ctx.strokeStyle = cssValues.backgroundColor;
+      sketchCtx.strokeStyle = cssValues.backgroundColor;
+      sketchProperties.lineWidth = initialLineWidth;
     });
   });
 
   const clearBtn = document.querySelector(".sketch-clear");
   clearBtn.addEventListener("click", () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    sketchCtx.clearRect(0, 0, sketchCanvas.width, sketchCanvas.height);
   });
 
   const eraserBtn = document.querySelector(".sketch-eraser");
   eraserBtn.addEventListener("click", () => {
-    ctx.strokeStyle = "#ffd664";
+    sketchCtx.strokeStyle = "#fff";
+    sketchProperties.lineWidth = sketchProperties.lineWidth * 2;
   });
 
   const finishBtn = document.querySelector(".sketch-finish");
-  let canvasNums = 0;
 
-  finishBtn.addEventListener("click", e => {
+  finishBtn.addEventListener("click", () => {
+    const newCanvas = duplicateCanvas(sketchCanvas);
+
+    // positioning
+    // newCanvas.style.left = boardProperties.canvasNums * newCanvas.width + "px";
+    // if (
+    //   boardProperties.canvasNums !== 0 &&
+    //   boardProperties.canvasNums % 4 === 0
+    // ) {
+    //   newCanvas.style.top =
+    //     Math.floor(boardProperties.canvasNums / 4) * newCanvas.height + "px";
+    // }
+
+    boardProperties.canvasNums += 1;
+    document.querySelector("#board").appendChild(newCanvas);
+  });
+
+  function duplicateCanvas(canvasToDupe) {
     const newCanvas = document.createElement("canvas");
     const newContext = newCanvas.getContext("2d");
 
-    newCanvas.width = canvas.width;
-    newCanvas.height = canvas.height;
-    newCanvas.style.backgroundColor = "#ffd664";
-    newCanvas.style.position = "absolute";
-    newCanvas.style.display = "inline-block";
-    newCanvas.style.transform = "scale(" + 0.25 + "," + 0.25 + ")";
-    if (canvasNums !== 0 && canvasNums % 3 === 0) {
-      newCanvas.style.top = -150 + (canvasNums / 3) * 150 + "px";
-    }
-    newCanvas.style.left = -200 + canvasNums * 200 + "px";
-    newContext.drawImage(canvas, 0, 0);
-    canvasNums += 1;
-    document.querySelector("#board").appendChild(newCanvas);
-  });
+    newCanvas.style.backgroundColor = "#fff";
+    // newCanvas.style.position = "absolute";
+    newCanvas.style.border = "1px solid black";
+    // newCanvas.className += "board-sketch";
+    // newCanvas.setAttribute("draggable", true);
+    // newCanvas.addEventListener("dragstart", e => {
+    //   e.target.style.opacity = 0.1;
+    // });
+
+    newContext.drawImage(canvasToDupe, 0, 0, newCanvas.width, newCanvas.height);
+    return newCanvas;
+  }
 });
