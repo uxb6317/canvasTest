@@ -6,20 +6,24 @@
 
 #sketch {
   position: relative;
+  display: inline-block;
   /* margin-top: 2rem;
   margin-left: 2rem; */
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+  width: 70vw;
+  height: 50vh;
 }
 
 #sketch-area {
-  background-color: #ffd664;
+  background-color: #fff;
 }
 
 #sketch .sketch-toolbar {
   position: absolute;
   top: 0;
   left: 0;
-  width: 700px;
-  background-color: #ffcb3a;
+  width: 100%;
+  background-color: rgb(39, 39, 39);
   padding: 0.5rem;
   display: flex;
   align-items: center;
@@ -74,6 +78,11 @@
 
 #board {
   position: relative;
-  width: 100vw;
-  height: 25rem;
+  margin: auto;
+  display: flex;
+  justify-content: space-evenly;
+  flex-wrap: wrap;
+  width: 90vw;
+  padding: 2rem;
+  border: 1px solid black;
 }
