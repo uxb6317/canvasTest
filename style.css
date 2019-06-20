@@ -16,6 +16,8 @@
 
 #sketch-area {
   background-color: #fff;
+  border: 1px solid #000;
+  /* z-index: 99; */
 }
 
 #sketch .sketch-toolbar {
@@ -27,6 +29,7 @@
   padding: 0.5rem;
   display: flex;
   align-items: center;
+  z-index: 100;
 }
 
 .sketch-finish {
@@ -78,11 +81,17 @@
 
 #board {
   position: relative;
-  margin: auto;
+  /* margin: auto;
   display: flex;
   justify-content: space-evenly;
-  flex-wrap: wrap;
-  width: 90vw;
+  flex-wrap: wrap; */
+  width: 100vw;
+  /* height: 50vh; */
   padding: 2rem;
   border: 1px solid black;
+  /* z-index: -100; */
 }
+
+/* .board-canvas {
+  position: relative;
+} */

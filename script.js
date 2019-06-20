@@ -3,6 +3,7 @@ mdc.ripple.MDCRipple.attachTo(document.querySelector(".sketch-clear"));
 
 window.addEventListener("load", () => {
   const sketchContainer = document.getElementById("sketch");
+  const board = document.getElementById("board");
   const sketchCanvas = document.querySelector("#sketch-area");
   const sketchCtx = sketchCanvas.getContext("2d");
   const initialLineWidth = 10;
@@ -13,7 +14,8 @@ window.addEventListener("load", () => {
   };
   let boardProperties = {
     canvasNums: 0,
-    perRow: 4
+    perRow: 4,
+    canvases: []
   };
 
   recomputeCanvasDimension(sketchCanvas, sketchContainer);
@@ -78,9 +80,12 @@ window.addEventListener("load", () => {
   });
 
   const clearBtn = document.querySelector(".sketch-clear");
-  clearBtn.addEventListener("click", () => {
-    sketchCtx.clearRect(0, 0, sketchCanvas.width, sketchCanvas.height);
-  });
+  clearBtn.addEventListener("click", () => clearCanvas(sketchCanvas));
+
+  function clearCanvas(canvas) {
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
 
   const eraserBtn = document.querySelector(".sketch-eraser");
   eraserBtn.addEventListener("click", () => {
@@ -92,35 +97,95 @@ window.addEventListener("load", () => {
 
   finishBtn.addEventListener("click", () => {
     const newCanvas = duplicateCanvas(sketchCanvas);
+    // boardProperties.canvasNums += 1;
+    // document.querySelector("#board").appendChild(newCanvas);
+    // sketchProperties.painting = false;
+    const draggableCanvas = interact(newCanvas);
+    const position = { x: 0, y: 0 };
+    draggableCanvas.draggable({
+      listeners: {
+        start(event) {
+          // console.log(event.type, event.target);
+          newCanvas.id = "draggingCanvas";
+          newCanvas.style.width = "300px";
+          newCanvas.style.height = "150px";
+        },
+        move(event) {
+          position.x += event.dx;
+          position.y += event.dy;
 
-    // positioning
-    // newCanvas.style.left = boardProperties.canvasNums * newCanvas.width + "px";
-    // if (
-    //   boardProperties.canvasNums !== 0 &&
-    //   boardProperties.canvasNums % 4 === 0
-    // ) {
-    //   newCanvas.style.top =
-    //     Math.floor(boardProperties.canvasNums / 4) * newCanvas.height + "px";
-    // }
-
-    boardProperties.canvasNums += 1;
-    document.querySelector("#board").appendChild(newCanvas);
+          event.target.style.transform = `translate(${position.x}px, ${
+            position.y
+          }px)`;
+        },
+        end(event) {
+          sketchContainer.removeChild(newCanvas);
+        }
+      }
+    });
   });
 
+  interact(board)
+    .dropzone({
+      ondrop: function(event) {
+        if (!event.draggable.target.classList.contains("boarded")) {
+          const newCanvas = duplicateCanvas(sketchCanvas);
+          newCanvas.style.position = "relative";
+          boardProperties.canvasNums += 1;
+          document.querySelector("#board").appendChild(newCanvas);
+          newCanvas.style.width = "300px";
+          newCanvas.style.height = "150px";
+          boardProperties.canvases.push(newCanvas);
+          // clear main canvas
+          clearCanvas(sketchCanvas);
+        }
+      }
+    })
+    .on("dropactivate", function(event) {
+      event.target.classList.add("drop-activated");
+    });
+
   function duplicateCanvas(canvasToDupe) {
-    const newCanvas = document.createElement("canvas");
-    const newContext = newCanvas.getContext("2d");
+    const tempCanvas = document.createElement("canvas");
+    const newContext = tempCanvas.getContext("2d");
 
-    newCanvas.style.backgroundColor = "#fff";
-    // newCanvas.style.position = "absolute";
-    newCanvas.style.border = "1px solid black";
-    // newCanvas.className += "board-sketch";
-    // newCanvas.setAttribute("draggable", true);
-    // newCanvas.addEventListener("dragstart", e => {
-    //   e.target.style.opacity = 0.1;
-    // });
+    tempCanvas.style.backgroundColor = "#fff";
+    tempCanvas.style.border = "1px solid black";
+    tempCanvas.style.position = "absolute";
+    tempCanvas.width = canvasToDupe.width;
+    tempCanvas.height = canvasToDupe.height;
 
-    newContext.drawImage(canvasToDupe, 0, 0, newCanvas.width, newCanvas.height);
-    return newCanvas;
+    newContext.drawImage(
+      canvasToDupe,
+      0,
+      0,
+      tempCanvas.width,
+      tempCanvas.height
+    );
+
+    // remove canvas following cursor
+    const draggableCanvas = interact(tempCanvas);
+    const position = { x: 0, y: 0 };
+
+    draggableCanvas.draggable({
+      listeners: {
+        start(event) {
+          tempCanvas.classList.add("boarded");
+        },
+        move(event) {
+          position.x += event.dx;
+          position.y += event.dy;
+
+          event.target.style.transform = `translate(${position.x}px, ${
+            position.y
+          }px)`;
+        }
+      }
+    });
+
+    // adds a dupe canvas on top of the old sketch canvas
+    sketchContainer.prepend(tempCanvas);
+
+    return tempCanvas;
   }
 });
