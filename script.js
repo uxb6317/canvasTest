@@ -6,6 +6,7 @@ window.addEventListener("load", () => {
   const board = document.getElementById("board");
   const sketchCanvas = document.querySelector("#sketch-area");
   const sketchCtx = sketchCanvas.getContext("2d");
+
   const initialLineWidth = 10;
   let sketchProperties = {
     lineWidth: initialLineWidth,
@@ -18,9 +19,9 @@ window.addEventListener("load", () => {
     canvases: []
   };
 
+  // set initial canvas size based on screen size
   recomputeCanvasDimension(sketchCanvas, sketchContainer);
 
-  // Problems: Sketch gets erased, lineWidth doesn't scale
   function recomputeCanvasDimension(canvasDom, containerDom) {
     /// get computed style for container
     const cs = getComputedStyle(containerDom);
@@ -69,6 +70,31 @@ window.addEventListener("load", () => {
     };
     draw(inputCoords, sketchProperties);
   });
+
+  // React to touch events on the canvas
+  sketchCanvas.addEventListener(
+    "touchstart",
+    e => {
+      sketchProperties.painting = true;
+      const inputCoords = {
+        x: e.clientX,
+        y: e.clientY
+      };
+      draw(inputCoords, sketchProperties);
+    },
+    false
+  );
+  sketchCanvas.addEventListener(
+    "touchmove",
+    e => {
+      const inputCoords = {
+        x: e.clientX,
+        y: e.clientY
+      };
+      draw(inputCoords, sketchProperties);
+    },
+    false
+  );
 
   const sketchColors = document.querySelectorAll(".color");
   sketchColors.forEach(color => {
@@ -183,7 +209,7 @@ window.addEventListener("load", () => {
       }
     });
 
-    // adds a dupe canvas on top of the old sketch canvas
+    // adds a copy canvas on top of the old sketch canvas
     sketchContainer.prepend(tempCanvas);
 
     return tempCanvas;
